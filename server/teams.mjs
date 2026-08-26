@@ -4,7 +4,12 @@
 // https://learn.microsoft.com/microsoftteams/platform/concepts/build-and-test/deep-link-workflow
 import { COURSE } from "./course.mjs";
 
-const WEB = "https://teams.microsoft.com";
+// teams.cloud.microsoft is the web client's home as of Aug 2026 (the old
+// teams.microsoft.com host redirects there). The web links are what the UI
+// leads with: YSU requires device enrollment before the desktop client will
+// sign in on a personal machine, so on most student laptops the browser -
+// or the installed PWA - is the Teams that actually works.
+const WEB = "https://teams.cloud.microsoft";
 const APP = "msteams:";
 
 export function splitByEmail(people) {
