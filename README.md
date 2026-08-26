@@ -86,3 +86,11 @@ the shape; the Setup tab writes your entry for you.
     app/       launch.vbs / launch.ps1 / stop.ps1 / create-shortcut.ps1
 
 Tests (no install needed): `node --test server/*.test.mjs`
+
+## CI
+
+`.github/workflows/ci.yml` runs the server tests and the React typecheck +
+build on every push and pull request. It deploys nothing - this is a desktop
+app and the release is `git pull` - but the green check on your copy tells
+you a template merge didn't break anything, and it is the worked example
+for Lab 4.

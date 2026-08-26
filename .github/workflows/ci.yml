@@ -1,0 +1,28 @@
+# Checks only - nothing here deploys. This is a desktop app; the "release"
+# is `git pull` on your own machine. The run answers one question on every
+# push and PR: does it still test, typecheck, and build? (Lab 4 is about
+# exactly this file. Read it, then break it on a branch and watch.)
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: react-app/package-lock.json
+      - name: Server tests (no install needed - stdlib only)
+        run: node --test server/*.test.mjs
+      - name: Typecheck + build the React app
+        working-directory: react-app
+        run: |
+          npm ci
+          npm run build
