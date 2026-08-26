@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.env.*
+# Your profile (GitHub handle, email) lives in %LOCALAPPDATA%\Teaching\,
+# not here - nothing personal should ever be committed from this repo.
