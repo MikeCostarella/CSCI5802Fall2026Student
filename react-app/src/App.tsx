@@ -77,6 +77,9 @@ export default function App() {
       <header>
         <AppMenu course={course} profile={profile} onRestartServer={doRestart} />
         <h1>{course?.code ?? "CSCI 5802"} <span className="sub">- Student</span></h1>
+        {/* Which machine this server runs on - same chip as StatehouseUI and
+            the management app, so a screenshot names its own box. */}
+        {course?.host && <span className="host" title="The machine this app is running on">{course.host.toUpperCase()}</span>}
         {profile?.github && <span className="host" title="Your GitHub handle (Setup tab)">@{profile.github}</span>}
         <span className="term">{course ? `${course.term} · ${course.title}` : "server offline?"}</span>
         <BuildStamp />
