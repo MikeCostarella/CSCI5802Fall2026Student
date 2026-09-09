@@ -1,11 +1,11 @@
 export interface Course {
   code: string; title: string; term: string; institution: string; owner: string;
   starterRepo: string; courseSiteRepo: string; studentRepo: string;
-  courseSiteUrl: string; lmsUrl: string; directoryPath: string; dataFolder: string;
+  courseSiteUrl: string; lmsUrl: string; directoryPath: string; dataFolder: string; participantsOrg: string;
   host: string; dataDir: string;
 }
 
-export interface Profile { name: string; github: string; email: string; }
+export interface Profile { name: string; github: string; email: string; reposRoot?: string; }
 export interface GhStatus { installed: boolean; authed: boolean; login: string | null; name?: string | null; }
 export interface ProfileView { profile: Profile; gh: GhStatus; directoryEntry: Profile; }
 
@@ -35,3 +35,61 @@ export interface TeamsLinks {
 }
 
 export interface Upstream { repo: string; url: string; commits: { sha: string; message: string; date: string; url: string }[]; }
+
+// ---- Repositories tab (appended to types.ts) ----
+
+export type RepoState = "clean" | "DIRTY" | "UNPUSHED" | "BEHIND" | "FLAGS" | "NOT-CLONED" | "NO-GIT" | "PENDING";
+
+export interface RepoRow {
+  name: string; fullName: string; url: string; description: string;
+  defaultBranch: string; private: boolean; fork: boolean; archived: boolean;
+  /** Your own fork of the starter, listed alongside the org's repos. */
+  mine: boolean;
+  pushedAt: string | null;
+  pagesUrl: string | null;
+  // local git
+  state: RepoState; cloned: boolean; branch: string;
+  dirty: number; ahead: number; behind: number; flags: string[]; hasWorkflow: boolean;
+  // GitHub signals (null when gh could not answer)
+  openPrs: number | null; ci: string | null;
+}
+
+export interface ReposResponse {
+  org: string; root: string; generated: string; listError: string | null; repos: RepoRow[];
+}
+
+export type RepoEvent =
+  | { type: "start"; total: number }
+  | { type: "line"; text: string }
+  | { type: "repo"; repo: string; kind: "updated" | "current" | "skipped" | "diverged" | "error"; detail: string }
+  | { type: "done"; tally: Record<string, number>; batch?: string };
+
+export interface ChromeProfile {
+  dir: string; pinned: boolean; name: string; email: string | null; hasPicture: boolean;
+}
+
+export interface ChromeProfile {
+  dir: string; pinned: boolean; name: string; email: string | null; hasPicture: boolean;
+}
+
+export interface RepoChange { path: string; status: string; }
+
+// Deploys drawer
+export interface BatchRepoResult { repo: string; action: string; detail?: string; repoUrl?: string | null; }
+export interface Batch {
+  id: string; applied: string; dryRun: boolean; summary: string; description: string; push: boolean;
+  results: BatchRepoResult[];
+}
+export interface BatchListEntry { id: string; applied: string; dryRun: boolean; summary: string; repoCount: number; }
+export interface DeployRow {
+  repo: string; pagesUrl: string | null; runId?: number | null;
+  status: string; conclusion?: string | null; title?: string; workflow?: string;
+  updatedAt?: string | null; url?: string | null; detail?: string;
+}
+export interface RunDetail {
+  repo: string; runId: number; name: string; title: string; status: string; conclusion: string | null;
+  event: string; createdAt: string | null; updatedAt: string | null; headSha: string; url: string | null;
+  jobs: { name: string; status: string; conclusion: string | null }[];
+  failedLog: string | null;
+}
+export interface RepoCommit { sha: string; date: string; author: string; subject: string; }

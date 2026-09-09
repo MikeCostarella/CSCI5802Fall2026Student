@@ -7,6 +7,10 @@ export const COURSE = {
   term: "Fall 2026",
   institution: "YSU",
   owner: "MikeCostarella",             // the GitHub account that owns the repos below
+  // The GitHub organization holding the class's shared repos (Repositories
+  // tab). The org's repo list, plus your own fork of the starter, is the
+  // ONLY set of repos that tab can touch.
+  participantsOrg: "MyWebSiteParticipants",
   starterRepo: "csci5802-api-starter", // you forked this; your work lives in your fork
   courseSiteRepo: "MyWebSiteDevelopmentCourse",
   studentRepo: "CSCI5802Fall2026Student", // this app (a template - you made your own copy)

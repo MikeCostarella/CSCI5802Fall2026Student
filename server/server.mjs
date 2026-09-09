@@ -13,6 +13,12 @@ import {
   handleCourse, handleDirectory, handleMySprint, handleProfile, handleProfileSave,
   handleRestart, handleSprints, handleTeamsLinks, handleUpstream, json,
 } from "./routes.mjs";
+import {
+  handleRepos, handleReposBatch, handleReposBatches, handleReposChanges, handleReposClone, handleReposCommit,
+  handleReposDeploys, handleReposDiff, handleReposDiscard, handleReposLog, handleReposOpen, handleReposPull,
+  handleReposPush, handleReposRunDetail, handleReposRunRerun,
+  handleChromeProfile, handleChromeProfilePicture, handleChromeProfileDefault,
+} from "./repo-routes.mjs";
 
 const MIME = {
   ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
@@ -50,6 +56,24 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/teams-links" && req.method === "GET") return await handleTeamsLinks(res, url);
     if (url.pathname === "/api/upstream" && req.method === "GET") return await handleUpstream(res);
     if (url.pathname === "/api/restart" && req.method === "POST") return await handleRestart(req, res);
+    if (url.pathname === "/api/repos" && req.method === "GET") return await handleRepos(res, url);
+    if (url.pathname === "/api/repos/clone" && req.method === "POST") return await handleReposClone(req, res);
+    if (url.pathname === "/api/repos/pull" && req.method === "POST") return await handleReposPull(req, res);
+    if (url.pathname === "/api/repos/commit" && req.method === "POST") return await handleReposCommit(req, res);
+    if (url.pathname === "/api/repos/push" && req.method === "POST") return await handleReposPush(req, res);
+    if (url.pathname === "/api/repos/discard" && req.method === "POST") return await handleReposDiscard(req, res);
+    if (url.pathname === "/api/repos/changes" && req.method === "GET") return await handleReposChanges(res, url);
+    if (url.pathname === "/api/repos/diff" && req.method === "GET") return await handleReposDiff(res, url);
+    if (url.pathname === "/api/repos/log" && req.method === "GET") return await handleReposLog(res, url);
+    if (url.pathname === "/api/repos/open" && req.method === "POST") return await handleReposOpen(req, res);
+    if (url.pathname === "/api/repos/batches" && req.method === "GET") return handleReposBatches(res);
+    if (url.pathname === "/api/repos/batch" && req.method === "GET") return handleReposBatch(res, url);
+    if (url.pathname === "/api/repos/deploys" && req.method === "POST") return await handleReposDeploys(req, res);
+    if (url.pathname === "/api/repos/run-detail" && req.method === "GET") return await handleReposRunDetail(res, url);
+    if (url.pathname === "/api/repos/run-rerun" && req.method === "POST") return await handleReposRunRerun(req, res);
+    if (url.pathname === "/api/chrome-profile" && req.method === "GET") return handleChromeProfile(res, url);
+    if (url.pathname === "/api/chrome-profile/picture" && req.method === "GET") return handleChromeProfilePicture(res, url);
+    if (url.pathname === "/api/chrome-profile/default" && req.method === "GET") return handleChromeProfileDefault(res);
     if (url.pathname.startsWith("/api/")) return json(res, 404, { error: "unknown endpoint" });
     return serveStatic(res, url.pathname);
   } catch (e) {

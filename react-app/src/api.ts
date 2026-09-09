@@ -1,5 +1,5 @@
 // All fetch/JSON plumbing in one place.
-import type { Course, DirectoryView, MySprint, Profile, ProfileView, Sprint, TeamsLinks, Upstream } from "./types";
+import type { ChromeProfile, Course, DirectoryView, MySprint, Profile, ProfileView, Sprint, TeamsLinks, Upstream } from "./types";
 
 async function get<T>(url: string): Promise<T> {
   const r = await fetch(url);
@@ -13,6 +13,9 @@ async function post<T>(url: string, body: unknown): Promise<T> {
 }
 
 export const fetchCourse = () => get<Course>("/api/course");
+export const fetchChromeProfile = (dir: string | null) =>
+  get<ChromeProfile>(`/api/chrome-profile${dir ? `?dir=${encodeURIComponent(dir)}` : ""}`);
+export const chromeProfilePictureUrl = (dir: string) => `/api/chrome-profile/picture?dir=${encodeURIComponent(dir)}`;
 export const fetchProfile = () => get<ProfileView>("/api/profile");
 export const saveProfile = (fields: Partial<Profile>) => post<{ profile: Profile }>("/api/profile", fields);
 export const fetchSprints = () => get<{ sprints: Sprint[]; current: string }>("/api/sprints");

@@ -3,6 +3,15 @@
 # Desktop-app launcher, same pattern as the instructor's management app:
 # make sure the server is running (hidden), then open the UI in an
 # app-mode browser window. Port 5182 (the management app owns 5181).
+#
+# Chrome profile: an unpinned --app window lands in whatever profile Chrome
+# used last - and links to GitHub then open in whatever account THAT profile
+# holds. So the launcher asks the server (already up by then) which profile
+# to use - the one carrying the Claude extension, else the most recent
+# signed-in one, else Chrome's last-used - pins it with --profile-directory,
+# and passes it as ?profile=<dir> so the header can show the signed-in
+# Google account (server/chrome-profile.mjs). CSCI5802_STUDENT_CHROME_PROFILE
+# overrides the choice.
 # =====================================================================
 $ErrorActionPreference = "Continue"
 $appDir = Split-Path $MyInvocation.MyCommand.Path -Parent
@@ -72,6 +81,24 @@ $edge = @(
   "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 
-if ($chrome)   { Start-Process -FilePath $chrome -ArgumentList "--app=$url", "--window-size=1300,860" }
+$profile = $env:CSCI5802_STUDENT_CHROME_PROFILE
+if (-not $profile) {
+  try {
+    $info = Invoke-RestMethod -Uri "$url/api/chrome-profile/default" -TimeoutSec 3
+    if ($info.dir) { $profile = $info.dir }
+  } catch { }
+}
+if ($profile) { $appUrl = "$url/?profile=$([uri]::EscapeDataString($profile))" } else { $appUrl = $url }
+
+# Profile directory names contain spaces ("Profile 6"). Start-Process joins
+# -ArgumentList elements with spaces WITHOUT quoting them, so an unquoted
+# element reaches Chrome as two arguments - and Chrome, told to use a
+# profile directory named "Profile" that does not exist, silently CREATES
+# a brand-new signed-out profile and opens there. The quotes must be
+# embedded in the element itself.
+$chromeArgs = @("--app=$appUrl", "--window-size=1300,860")
+if ($profile) { $chromeArgs = @("--profile-directory=`"$profile`"") + $chromeArgs }
+
+if ($chrome)   { Start-Process -FilePath $chrome -ArgumentList $chromeArgs }
 elseif ($edge) { Start-Process -FilePath $edge   -ArgumentList "--app=$url", "--window-size=1300,860" }
 else           { Start-Process $url }

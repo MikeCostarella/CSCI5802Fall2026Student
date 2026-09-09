@@ -26,7 +26,7 @@ export function readBody(req) {
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
-const EMPTY_PROFILE = { name: "", github: "", email: "" };
+const EMPTY_PROFILE = { name: "", github: "", email: "", reposRoot: "" }; // reposRoot: Repositories tab clone folder ("" = default)
 
 /**
  * The saved profile, with the gh login standing in for an unset handle so

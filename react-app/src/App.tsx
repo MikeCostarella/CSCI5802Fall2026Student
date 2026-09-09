@@ -6,10 +6,13 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchCourse, fetchDirectory, fetchMySprint, fetchProfile, fetchSprints, fetchUpstream, restartServer, saveProfile } from "./api";
 import AppMenu from "./components/AppMenu";
 import BuildStamp from "./components/BuildStamp";
+import ChromeProfile from "./components/ChromeProfile";
+import RepositoriesTab from "./components/RepositoriesTab";
 import TeamsDialog from "./components/TeamsDialog";
 import type { Classmate, Course, DirectoryView, MySprint, Profile, ProfileView, Sprint, Upstream } from "./types";
 
-type Tab = "sprint" | "classmates" | "setup";
+type Tab = "sprint" | "classmates" | "repos" | "setup";
+const TAB_LABEL: Record<Tab, string> = { sprint: "Sprint", classmates: "Classmates", repos: "Repositories", setup: "Setup" };
 
 export default function App() {
   const [course, setCourse] = useState<Course | null>(null);
@@ -24,7 +27,7 @@ export default function App() {
   const [dirLoading, setDirLoading] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [reach, setReach] = useState<Classmate[] | null>(null);
-  const [form, setForm] = useState<Profile>({ name: "", github: "", email: "" });
+  const [form, setForm] = useState<Profile>({ name: "", github: "", email: "", reposRoot: "" });
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -73,7 +76,7 @@ export default function App() {
     : <span className="chip warn">{ci.conclusion}</span>;
 
   return (
-    <div className="app">
+    <div className={tab === "repos" ? "app wide" : "app"}>
       <header>
         <AppMenu course={course} profile={profile} onRestartServer={doRestart} />
         <h1>{course?.code ?? "CSCI 5802"} <span className="sub">- Student</span></h1>
@@ -83,12 +86,13 @@ export default function App() {
         {profile?.github && <span className="host" title="Your GitHub handle (Setup tab)">@{profile.github}</span>}
         <span className="term">{course ? `${course.term} · ${course.title}` : "server offline?"}</span>
         <BuildStamp />
+        <ChromeProfile />
       </header>
 
       <nav>
-        {(["sprint", "classmates", "setup"] as Tab[]).map((t) => (
+        {(["sprint", "classmates", "repos", "setup"] as Tab[]).map((t) => (
           <button key={t} className={tab === t ? "active" : ""} onClick={() => { setTab(t); if (t === "classmates" && dir === null) loadDir(); }}>
-            {t[0].toUpperCase() + t.slice(1)}
+            {TAB_LABEL[t]}
           </button>
         ))}
       </nav>
@@ -197,6 +201,10 @@ export default function App() {
         </div>
       )}
 
+      {/* Mounted only while visible: scans the org (plus your fork) via gh on first
+          mount and owns its own selection/log state. */}
+      {tab === "repos" && <RepositoriesTab org={course?.participantsOrg ?? null} />}
+
       {tab === "setup" && pv && (
         <div className="panel setup">
           <h3>1. GitHub CLI</h3>
@@ -222,6 +230,10 @@ export default function App() {
           </label>
           <label className="field">YSU email (what Teams calls you by)
             <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@student.ysu.edu" />
+          </label>
+          <label className="field">Repos folder (where the Repositories tab clones the class repos; blank = default)
+            <input value={form.reposRoot ?? ""} onChange={(e) => setForm({ ...form, reposRoot: e.target.value })}
+              placeholder={`%USERPROFILE%\\CSCI5802\\${course?.participantsOrg ?? "org"}`} spellCheck={false} />
           </label>
           <div className="row"><button className="primary" onClick={save}>Save</button></div>
 

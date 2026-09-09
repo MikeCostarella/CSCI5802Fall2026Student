@@ -24,8 +24,9 @@ new repository** under your own account (private is fine), then:
     app\launch.vbs                 # or double-click the icon
 
 You also need Node 20+ and the [GitHub CLI](https://cli.github.com/), signed
-in once with `gh auth login`. The app reads everything through `gh` and
-never writes: it will not push, open PRs, or touch your fork.
+in once with `gh auth login`. Apart from the Repositories tab (which runs
+git for you, only in the repos you check), the app reads everything through
+`gh` and never writes: it will not open PRs or touch your fork on its own.
 
 To pick up changes the instructor makes to the template (the sprint calendar
 lives in `server/course.mjs`), add it as a remote and merge:
@@ -34,7 +35,7 @@ lives in `server/course.mjs`), add it as a remote and merge:
     git fetch template && git merge template/main
     cd react-app && npm run build && cd ..     # then Menu > Restart server
 
-## The three tabs
+## The four tabs
 
 **Sprint** — the current lab (or checkpoint / final), its window and days
 left, a link to the spec on the course site, and your fork inside that
@@ -48,8 +49,21 @@ and **Reach** to start a group chat or call. The app only builds a
 `msteams:` deep link; the Teams desktop client does the talking, and screen
 sharing is Teams' own Share button.
 
+**Repositories** — the class's shared repos in the
+[MyWebSiteParticipants](https://github.com/MyWebSiteParticipants) org, plus
+your own fork of the starter, managed the way the instructor's fleet tool
+does it: clone the ones you don't have yet, see which are dirty / unpushed /
+behind, get latest (fast-forward only — anything with local changes is left
+alone), commit and push a batch with one summary, and watch the GitHub
+Actions runs those pushes start in the Deploys drawer. **This is the one tab
+that writes**: `git add -A` / `commit` / `push` in the repos you check, and
+"Discard" is a `git stash` you can pop back. Everything else in the app
+stays read-only. Clones go under `%USERPROFILE%\CSCI5802\MyWebSiteParticipants\`
+unless you pick another folder on Setup.
+
 **Setup** — is `gh` signed in, who you are (name, GitHub handle, YSU email),
-and your copy-paste entry for the directory.
+where the Repositories tab clones to, and your copy-paste entry for the
+directory.
 
 Your profile is stored in `%LOCALAPPDATA%\Teaching\CSCI5802-Fall2026-Student\`,
 outside the repo, so a careless `git add -A` can never publish it.
@@ -80,6 +94,10 @@ the shape; the Setup tab writes your entry for you.
               sprints.mjs  sprint windows (pure) + your fork's signals
               directory.mjs the opt-in directory: parse (pure) + fetch/cache
               teams.mjs    Teams deep links (pure)
+              repos.mjs    Repositories tab: org list via gh, local git status / clone / pull / commit
+              repo-routes.mjs  its /api/repos/* handlers (NDJSON streams for the long ones)
+              deploys.mjs  commit history + GitHub Actions status for the Deploys drawer
+              repos-root.mjs  where clones live (Setup tab, default under your home folder)
               routes.mjs   the /api handlers
               server.mjs   http + static
     react-app/ Vite + React + TypeScript, no other dependencies

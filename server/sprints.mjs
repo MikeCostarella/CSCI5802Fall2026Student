@@ -36,8 +36,10 @@ export async function myForkSignals(github, sprint) {
     "--jq", "[.[] | .sha] | length"]);
   const prs = await ghJson(["api", `repos/${repo}/pulls?state=open&per_page=20`,
     "--jq", "[.[] | {number, title, html_url, created_at}]"]);
-  const run = await ghJson(["api", `repos/${repo}/actions/runs?per_page=1`,
-    "--jq", "{conclusion: (.workflow_runs[0].conclusion // \"none\"), url: (.workflow_runs[0].html_url // \"\"), status: (.workflow_runs[0].status // \"\")}"]);
+  // The CI workflow's newest run (by name "CI" / file ci.yml), falling back to
+  // any workflow - so a failing deploy.yml does not read as a failing build.
+  const run = await ghJson(["api", `repos/${repo}/actions/runs?per_page=20`,
+    "--jq", '(([.workflow_runs[] | select((.name | ascii_downcase) == "ci" or (.path | endswith("/ci.yml")))] | .[0]) // .workflow_runs[0]) | {conclusion: (.conclusion // "none"), url: (.html_url // ""), status: (.status // "")}']);
   const cmp = await ghJson(["api", `repos/${repo}/compare/${COURSE.owner}:${info.default_branch}...${info.default_branch}`,
     "--jq", "{behind: .behind_by, ahead: .ahead_by}"]);
   return {
