@@ -9,6 +9,7 @@ import { readDoc, writeDoc } from "./store.mjs";
 import { ghJson, ghStatus } from "./gh.mjs";
 import { currentSprintId, daysUntil, myForkSignals, sprintWindows } from "./sprints.mjs";
 import { entryFor, fetchDirectory } from "./directory.mjs";
+import { mergeClassmates, normalizeClassmate, readClassmates, removeClassmate, upsertClassmate, writeClassmates } from "./classmates.mjs";
 import { teamsLinks } from "./teams.mjs";
 
 export function json(res, code, body) {
@@ -80,28 +81,57 @@ export async function handleMySprint(res, url) {
   return json(res, 200, { sprint: { ...sprint, daysLeft: daysUntil(sprint.due, today()) }, github: profile.github, fork });
 }
 
-/** GET /api/directory[?refresh=1] - classmates who opted in, and whether you're among them. */
-export async function handleDirectory(res, url) {
-  const dir = await fetchDirectory({ force: url.searchParams.has("refresh") });
+/** Directory + your own list, with `me` flagged; `dir` is the directory fetch result. */
+async function classmateRows(dir) {
   const { profile } = await currentProfile();
   const me = profile.github.toLowerCase();
-  const entries = (dir.entries ?? []).map((e) => ({ ...e, me: e.github.toLowerCase() === me }));
+  const entries = mergeClassmates(dir.entries, readClassmates()).map((e) => ({ ...e, me: e.github.toLowerCase() === me }));
+  return { profile, entries };
+}
+
+/** GET /api/directory[?refresh=1] - classmates who opted in plus the ones you added, and whether you're listed. */
+export async function handleDirectory(res, url) {
+  const dir = await fetchDirectory({ force: url.searchParams.has("refresh") });
+  const { profile, entries } = await classmateRows(dir);
   const upstream = `https://github.com/${COURSE.owner}/${COURSE.starterRepo}`;
   return json(res, 200, {
-    entries, error: dir.error, fetchedAt: dir.at ? new Date(dir.at).toISOString() : null,
-    listed: entries.some((e) => e.me),
+    entries, error: dir.error, directoryMissing: !!dir.missing, fetchedAt: dir.at ? new Date(dir.at).toISOString() : null,
+    listed: entries.some((e) => e.me && e.source !== "mine"),
+    mineCount: entries.filter((e) => e.source !== "directory").length,
     directoryUrl: `${upstream}/blob/main/${COURSE.directoryPath}`,
     editUrl: `${upstream}/edit/main/${COURSE.directoryPath}`,
     entry: entryFor(profile),
   });
 }
 
+/**
+ * POST /api/classmates {name?, github, email?} - add or update someone in YOUR
+ * list (classmates.json in the data folder; never the shared directory).
+ */
+export async function handleClassmateSave(req, res) {
+  let entry;
+  try { entry = normalizeClassmate(JSON.parse((await readBody(req)) || "{}")); }
+  catch (e) { return json(res, 400, { error: String(e.message) }); }
+  writeClassmates(upsertClassmate(readClassmates(), entry));
+  const { entries } = await classmateRows(await fetchDirectory());
+  return json(res, 200, { entry, entries });
+}
+
+/** DELETE /api/classmates?github=<handle> - drop someone from your list (directory rows are untouched). */
+export async function handleClassmateDelete(res, url) {
+  const github = url.searchParams.get("github") || "";
+  if (!github) return json(res, 400, { error: "github is required" });
+  writeClassmates(removeClassmate(readClassmates(), github));
+  const { entries } = await classmateRows(await fetchDirectory());
+  return json(res, 200, { entries });
+}
+
 /** GET /api/teams-links?github=a,b&message=... */
 export async function handleTeamsLinks(res, url) {
   const wanted = (url.searchParams.get("github") || "").split(",").filter(Boolean).map((g) => g.toLowerCase());
-  const dir = await fetchDirectory();
-  const people = (dir.entries ?? []).filter((e) => wanted.includes(e.github.toLowerCase()));
-  if (!people.length) return json(res, 400, { error: "nobody selected, or they are not in the directory" });
+  const { entries } = await classmateRows(await fetchDirectory());
+  const people = entries.filter((e) => wanted.includes(e.github.toLowerCase()));
+  if (!people.length) return json(res, 400, { error: "nobody selected, or they are not in the directory or your list" });
   return json(res, 200, teamsLinks(people, { message: url.searchParams.get("message") || "" }));
 }
 

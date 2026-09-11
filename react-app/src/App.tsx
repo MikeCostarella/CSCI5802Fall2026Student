@@ -1,15 +1,17 @@
 // Three views: Sprint (where am I in the current lab and how does my fork
-// look), Classmates (the opt-in directory, with Teams call/chat), and Setup
-// (gh, handle, email, directory entry). The instructor's board reads the
+// look), Classmates (the opt-in directory plus anyone you add yourself, with
+// Teams call/chat), and Setup (gh, handle, email, directory entry). The instructor's board reads the
 // same GitHub signals this app shows you, so there are no surprises.
 import { useCallback, useEffect, useState } from "react";
-import { fetchCourse, fetchDirectory, fetchMySprint, fetchProfile, fetchSprints, fetchUpstream, restartServer, saveProfile } from "./api";
+import { fetchCourse, fetchDirectory, fetchMySprint, fetchProfile, fetchSprints, fetchUpstream, removeClassmate, restartServer, saveClassmate, saveProfile } from "./api";
 import AppMenu from "./components/AppMenu";
 import BuildStamp from "./components/BuildStamp";
 import ChromeProfile from "./components/ChromeProfile";
+import HelpDialog from "./components/HelpDialog";
+import { TOPIC_FOR_TAB, type HelpTopic } from "./components/help-content";
 import RepositoriesTab from "./components/RepositoriesTab";
 import TeamsDialog from "./components/TeamsDialog";
-import type { Classmate, Course, DirectoryView, MySprint, Profile, ProfileView, Sprint, Upstream } from "./types";
+import type { Classmate, ClassmateFields, Course, DirectoryView, MySprint, Profile, ProfileView, Sprint, Upstream } from "./types";
 
 type Tab = "sprint" | "classmates" | "repos" | "setup";
 const TAB_LABEL: Record<Tab, string> = { sprint: "Sprint", classmates: "Classmates", repos: "Repositories", setup: "Setup" };
@@ -27,9 +29,13 @@ export default function App() {
   const [dirLoading, setDirLoading] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [reach, setReach] = useState<Classmate[] | null>(null);
+  const [addOpen, setAddOpen] = useState(false);                        // the "Add classmate" fold-out
+  const [addForm, setAddForm] = useState<ClassmateFields>({ name: "", github: "", email: "" });
+  const [addSaving, setAddSaving] = useState(false);
   const [form, setForm] = useState<Profile>({ name: "", github: "", email: "", reposRoot: "" });
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [help, setHelp] = useState<HelpTopic | null>(null);            // open help topic, or null
 
   const flash = (msg: string) => { setNotice(msg); setTimeout(() => setNotice(""), 4000); };
 
@@ -60,6 +66,30 @@ export default function App() {
     catch (e) { setError(String((e as Error).message)); }
   };
 
+  /** Add or update someone in YOUR classmates list; the server returns the merged rows. */
+  const saveAdded = async () => {
+    setError(""); setAddSaving(true);
+    try {
+      const r = await saveClassmate(addForm);
+      setDir((d) => (d ? { ...d, entries: r.entries, mineCount: r.entries.filter((e) => e.source !== "directory").length } : d));
+      setAddForm({ name: "", github: "", email: "" }); setAddOpen(false);
+      flash(`Saved ${r.entry.name} to your list.`);
+    } catch (e) { setError(String((e as Error).message)); }
+    finally { setAddSaving(false); }
+  };
+
+  const removeAdded = async (c: Classmate) => {
+    setError("");
+    try {
+      const r = await removeClassmate(c.github);
+      setDir((d) => (d ? { ...d, entries: r.entries, mineCount: r.entries.filter((e) => e.source !== "directory").length } : d));
+      setSelected((prev) => { const n = new Set(prev); n.delete(c.github); return n; });
+      flash(c.source === "both" ? `Removed ${c.name} from your list (still in the directory).` : `Removed ${c.name}.`);
+    } catch (e) { setError(String((e as Error).message)); }
+  };
+
+  const editAdded = (c: Classmate) => { setAddForm({ name: c.name, github: c.github, email: c.email }); setAddOpen(true); };
+
   const doRestart = async () => {
     setNotice("Restarting server…");
     const back = await restartServer();
@@ -68,6 +98,21 @@ export default function App() {
   };
 
   const profile = pv?.profile ?? null;
+
+  /** Help for whatever tab is showing; `start` when a caller asks for it explicitly. */
+  const openHelp = useCallback((topic?: HelpTopic) => setHelp(topic ?? TOPIC_FOR_TAB[tab] ?? "start"), [tab]);
+
+  // F1 or ? opens help for the current tab - except while typing in a field,
+  // where ? is just a character.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable);
+      if (e.key === "F1" || (e.key === "?" && !typing && !e.ctrlKey && !e.altKey && !e.metaKey)) { e.preventDefault(); openHelp(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openHelp]);
   const daysWord = (n: number) => n < 0 ? `${-n} day${-n === 1 ? "" : "s"} overdue` : n === 0 ? "due today" : `${n} day${n === 1 ? "" : "s"} left`;
   const ciChip = (ci: NonNullable<MySprint["fork"]["ci"]>) =>
     ci.status && ci.status !== "completed" ? <span className="chip attendee">{ci.status}</span>
@@ -78,7 +123,7 @@ export default function App() {
   return (
     <div className={tab === "repos" ? "app wide" : "app"}>
       <header>
-        <AppMenu course={course} profile={profile} onRestartServer={doRestart} />
+        <AppMenu course={course} profile={profile} onRestartServer={doRestart} onHelp={openHelp} />
         <h1>{course?.code ?? "CSCI 5802"} <span className="sub">- Student</span></h1>
         {/* Which machine this server runs on - same chip as StatehouseUI and
             the management app, so a screenshot names its own box. */}
@@ -87,7 +132,10 @@ export default function App() {
         <span className="term">{course ? `${course.term} · ${course.title}` : "server offline?"}</span>
         <BuildStamp />
         <ChromeProfile />
+        <button className="help-btn" title="Help for this tab (F1 or ?)" aria-label="Help" onClick={() => openHelp()}>?</button>
       </header>
+
+      {help && <HelpDialog topic={help} course={course} onTopic={setHelp} onClose={() => setHelp(null)} />}
 
       <nav>
         {(["sprint", "classmates", "repos", "setup"] as Tab[]).map((t) => (
@@ -160,15 +208,43 @@ export default function App() {
       {tab === "classmates" && (
         <div className="panel classmates">
           <div className="row">
-            <span className="muted">Classmates who added themselves to {course?.directoryPath} (opt-in; see Setup to add yourself).</span>
+            <span className="muted">
+              The class directory (whoever opted in), plus anyone you add yourself - those stay on this machine.
+            </span>
             <button onClick={() => loadDir(true)} disabled={dirLoading}>{dirLoading ? "Loading…" : "Refresh"}</button>
+            {addOpen
+              ? <button onClick={() => { setAddOpen(false); setAddForm({ name: "", github: "", email: "" }); }}>Cancel</button>
+              : <button title="Add a classmate to your own list (stored locally, not in the shared directory)" onClick={() => setAddOpen(true)}>Add classmate{"\u2026"}</button>}
             <button style={{ marginLeft: "auto" }} disabled={selected.size === 0}
               onClick={() => dir && setReach(dir.entries.filter((e) => selected.has(e.github)))}>
               {"💬"} Reach {selected.size === 0 ? "…" : `${selected.size} selected`}
             </button>
           </div>
-          {dir?.error && <p className="error">{dir.error}</p>}
-          {dir && !dir.listed && profile?.github && <p className="muted">You're not in the directory yet - classmates can't reach you until you add yourself (Setup tab).</p>}
+          {addOpen && (
+            <form className="add-classmate" onSubmit={(e) => { e.preventDefault(); if (addForm.github.trim() && !addSaving) saveAdded(); }}>
+              <label className="field">Name
+                <input value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} placeholder="Ann Lee" autoFocus />
+              </label>
+              <label className="field">GitHub handle (required)
+                <input value={addForm.github} onChange={(e) => setAddForm({ ...addForm, github: e.target.value })} placeholder="alee" spellCheck={false} />
+              </label>
+              <label className="field">Email (for Teams; optional)
+                <input value={addForm.email} onChange={(e) => setAddForm({ ...addForm, email: e.target.value })} placeholder="alee@student.ysu.edu" />
+              </label>
+              <div className="row">
+                <button className="primary" type="submit" disabled={!addForm.github.trim() || addSaving}>{addSaving ? "Saving…" : "Save"}</button>
+                <span className="muted">Kept on this machine only. Saving the same GitHub handle again updates the entry.</span>
+              </div>
+            </form>
+          )}
+          {/* One status line, chosen by situation: the directory doesn't exist yet / couldn't be read / exists but you're not in it. */}
+          {dir?.directoryMissing && (
+            <p className="muted">Nobody has started the class directory yet{profile?.github ? " - you could be first (Setup tab)" : ""}.</p>
+          )}
+          {dir?.error && !dir.directoryMissing && <p className="error">Couldn't read the class directory: {dir.error}</p>}
+          {dir && !dir.error && !dir.listed && profile?.github && (
+            <p className="muted">You're not in the directory yet, so classmates can't reach you - add yourself on the Setup tab.</p>
+          )}
           <table>
             <thead><tr>
               <th className="select-col"><input type="checkbox" checked={!!dir && dir.entries.some((e) => !e.me) && dir.entries.filter((e) => !e.me).every((e) => selected.has(e.github))}
@@ -188,14 +264,22 @@ export default function App() {
                     : <span className="icon-btn off" title="No email">{"✉"}</span>}
                   <a className="icon-btn" title={`GitHub: ${c.github}`} href={`https://github.com/${c.github}`} target="_blank" rel="noreferrer">{"⎇"}</a>
                   <a className="icon-btn" title={`Fork: ${c.github}/${course?.starterRepo}`} href={`https://github.com/${c.github}/${course?.starterRepo}`} target="_blank" rel="noreferrer">{"⑂"}</a>
+                  {c.source !== "directory" ? <>
+                    <button className="icon-btn" title="Edit your entry for this classmate" onClick={() => editAdded(c)}>{"✎"}</button>
+                    <button className="icon-btn" title={c.source === "both" ? "Remove from your list (stays in the directory)" : "Remove from your list"} onClick={() => removeAdded(c)}>{"✕"}</button>
+                  </> : <>
+                    <span className="icon-btn off" title="From the shared directory - not editable here">{"✎"}</span>
+                    <span className="icon-btn off" title="From the shared directory - can't be removed here">{"✕"}</span>
+                  </>}
                 </td>
-                <td>{c.name} {c.me && <span className="chip attendee">you</span>}</td>
+                {/* Only directory rows get a tag: they're the ones you can't edit or remove here. Your own entries are unmarked. */}
+                <td>{c.name} {c.me && <span className="chip attendee">you</span>} {c.source !== "mine" && <span className="chip attendee" title={c.source === "both" ? "In the shared directory (you also have your own entry - edit/remove affect only yours)" : "From the shared directory - edit it there"}>directory</span>}</td>
                 <td className="mono">{c.github}</td>
                 <td>{c.email || <span className="muted">not shared</span>}</td>
               </tr>
             ))}</tbody>
           </table>
-          {dir && dir.entries.length === 0 && !dir.error && <p className="muted">Nobody yet. Be the first - Setup tab.</p>}
+          {dir && dir.entries.length === 0 && <p className="muted">No one listed yet. Add classmates yourself, or be the first in the directory (Setup tab).</p>}
           {dir === null && dirLoading && <p className="muted">Loading…</p>}
           {reach && <TeamsDialog key={reach.map((p) => p.github).join(",")} people={reach} onClose={() => setReach(null)} />}
         </div>

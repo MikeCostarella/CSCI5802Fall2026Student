@@ -1,5 +1,5 @@
 // All fetch/JSON plumbing in one place.
-import type { ChromeProfile, Course, DirectoryView, MySprint, Profile, ProfileView, Sprint, TeamsLinks, Upstream } from "./types";
+import type { Classmate, ClassmateFields, ChromeProfile, Course, DirectoryView, MySprint, Profile, ProfileView, Sprint, TeamsLinks, Upstream } from "./types";
 
 async function get<T>(url: string): Promise<T> {
   const r = await fetch(url);
@@ -21,6 +21,13 @@ export const saveProfile = (fields: Partial<Profile>) => post<{ profile: Profile
 export const fetchSprints = () => get<{ sprints: Sprint[]; current: string }>("/api/sprints");
 export const fetchMySprint = (id: string) => get<MySprint>(`/api/my-sprint?sprint=${encodeURIComponent(id)}`);
 export const fetchDirectory = (refresh = false) => get<DirectoryView>(`/api/directory${refresh ? "?refresh=1" : ""}`);
+/** Your own classmates list (classmates.json in the data folder). Both return the merged rows. */
+export const saveClassmate = (fields: ClassmateFields) => post<{ entry: ClassmateFields; entries: Classmate[] }>("/api/classmates", fields);
+export const removeClassmate = async (github: string): Promise<{ entries: Classmate[] }> => {
+  const r = await fetch(`/api/classmates?github=${encodeURIComponent(github)}`, { method: "DELETE" });
+  if (!r.ok) throw new Error((await r.json().catch(() => null))?.error ?? r.statusText);
+  return r.json();
+};
 export const fetchTeamsLinks = (github: string[], message = "") =>
   get<TeamsLinks>(`/api/teams-links?github=${encodeURIComponent(github.join(","))}&message=${encodeURIComponent(message)}`);
 export const fetchUpstream = () => get<Upstream>("/api/upstream");

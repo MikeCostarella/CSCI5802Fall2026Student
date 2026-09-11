@@ -3,6 +3,7 @@
 // stays the only place the course is named.
 import { useEffect, useRef, useState } from "react";
 import type { Course, Profile } from "../types";
+import { HELP_TOPICS, type HelpTopic } from "./help-content";
 
 interface MenuLink { label: string; href: string; note?: string; }
 interface MenuSection { title: string; links: MenuLink[]; }
@@ -35,11 +36,11 @@ function sectionsFor(course: Course, profile: Profile | null): MenuSection[] {
   ];
 }
 
-interface Props { course: Course | null; profile: Profile | null; onRestartServer: () => void; }
+interface Props { course: Course | null; profile: Profile | null; onRestartServer: () => void; onHelp: (topic?: HelpTopic) => void; }
 
-export default function AppMenu({ course, profile, onRestartServer }: Props) {
+export default function AppMenu({ course, profile, onRestartServer, onHelp }: Props) {
   const [open, setOpen] = useState(false);
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set(["Course", "My repos"]));
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(["Course", "My repos", "Help"]));
   const anchorRef = useRef<HTMLDivElement>(null);
 
   const toggleSection = (t: string) => setOpenSections((prev) => {
@@ -92,6 +93,23 @@ export default function AppMenu({ course, profile, onRestartServer }: Props) {
                   Restart server
                   <span className="menu-note">after a git pull that changed server/</span>
                 </button>
+              </div>
+            )}
+          </div>
+          <div className="menu-section">
+            <button className="menu-header" onClick={() => toggleSection("Help")}>
+              <span className={`chevron ${openSections.has("Help") ? "open" : ""}`}>&#9656;</span>
+              Help
+            </button>
+            {openSections.has("Help") && (
+              <div className="menu-links">
+                <button className="menu-action" onClick={() => { setOpen(false); onHelp(); }}>
+                  Help for this tab
+                  <span className="menu-note">F1 or ? anywhere</span>
+                </button>
+                {HELP_TOPICS.map((t) => (
+                  <button key={t.id} className="menu-action" onClick={() => { setOpen(false); onHelp(t.id); }}>{t.title}</button>
+                ))}
               </div>
             )}
           </div>

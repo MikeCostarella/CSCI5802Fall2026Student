@@ -43,9 +43,13 @@ window: commits, CI result, open PRs, and how far behind upstream you are
 (with the `git fetch upstream && git merge` recipe when you are). This is
 exactly what the instructor's sprint board reads for you.
 
-**Classmates** — everyone who opted into the class directory (below), with
-Teams chat / call, email, and links to their GitHub and fork. Check several
-and **Reach** to start a group chat or call. The app only builds a
+**Classmates** — everyone who opted into the class directory (below), plus
+anyone you add yourself with **Add classmate…** (name, GitHub handle, email),
+with Teams chat / call, email, and links to their GitHub and fork. Your own
+additions live in `classmates.json` in your data folder — this machine only,
+never the shared directory — with edit and remove; rows from the shared
+directory are tagged *directory* and can't be edited here. Check several and
+**Reach** to start a group chat or call. The app only builds a
 `msteams:` deep link; the Teams desktop client does the talking, and screen
 sharing is Teams' own Share button.
 
@@ -61,12 +65,18 @@ that writes**: `git add -A` / `commit` / `push` in the repos you check, and
 stays read-only. Clones go under `%USERPROFILE%\CSCI5802\MyWebSiteParticipants\`
 unless you pick another folder on Setup.
 
+**Help** — Menu › Help, the `?` button in the header, or `F1` / `?` on the
+keyboard open a help window on the topic for the tab you're on (getting
+started, each tab, the menu and shortcuts). The text lives in
+`react-app/src/components/help-content.tsx`.
+
 **Setup** — is `gh` signed in, who you are (name, GitHub handle, YSU email),
 where the Repositories tab clones to, and your copy-paste entry for the
 directory.
 
-Your profile is stored in `%LOCALAPPDATA%\Teaching\CSCI5802-Fall2026-Student\`,
-outside the repo, so a careless `git add -A` can never publish it.
+Your profile and your own classmates list are stored in
+`%LOCALAPPDATA%\Teaching\CSCI5802-Fall2026-Student\`, outside the repo, so a
+careless `git add -A` can never publish them.
 
 ## The class directory (opt-in)
 
@@ -85,6 +95,13 @@ Leave out `email` if you'd rather not share it; you'll still be listed with
 your GitHub links, just not callable. `directory.example.json` here shows
 the shape; the Setup tab writes your entry for you.
 
+The directory is the shared, opt-in half. The private half is your own list
+on the Classmates tab: add a classmate who hasn't (or won't) add themselves,
+or a study group you want reachable regardless, and it's stored in
+`classmates.json` next to your profile — it never leaves your machine and is
+never sent anywhere. Where both know someone, the directory's name and email
+win (they chose them); your entry fills in an email the directory lacks.
+
 ## Layout
 
     server/   course.mjs   the ONLY file naming the course, term, and sprints
@@ -93,6 +110,7 @@ the shape; the Setup tab writes your entry for you.
               gh.mjs       every GitHub call (read-only, via gh)
               sprints.mjs  sprint windows (pure) + your fork's signals
               directory.mjs the opt-in directory: parse (pure) + fetch/cache
+              classmates.mjs your own classmates list: validate + merge with the directory (pure), classmates.json on disk
               teams.mjs    Teams deep links (pure)
               repos.mjs    Repositories tab: org list via gh, local git status / clone / pull / commit
               repo-routes.mjs  its /api/repos/* handlers (NDJSON streams for the long ones)

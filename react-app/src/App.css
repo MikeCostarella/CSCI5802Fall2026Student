@@ -385,3 +385,39 @@ pre.diff { flex: 1; margin: 0; max-height: 320px; overflow: auto; background: #f
 .deploy-detail-head { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
 .deploy-faillog { margin: 0; padding: 8px; max-height: 180px; overflow: auto; font-size: 11px; line-height: 1.5;
   background: #042f2e; color: #fecaca; border-radius: 6px; white-space: pre-wrap; word-break: break-all; }
+
+/* --- Classmates: the "Add classmate" fold-out --- */
+.add-classmate { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin: 4px 0 10px;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--chip-bg); }
+.add-classmate .field { flex: 1 1 180px; margin: 0; }
+.add-classmate .row { flex: 1 1 100%; margin: 0; }
+
+/* --- Help: header button + dialog --- */
+.help-btn { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--panel);
+  color: var(--muted); font: 700 14px/1 "Segoe UI", system-ui, sans-serif; cursor: pointer; flex: none; }
+.help-btn:hover { border-color: var(--accent); color: var(--accent); }
+.help-dialog { width: 860px; }
+.help-body { display: flex; gap: 18px; min-height: 360px; }
+.help-nav { display: flex; flex-direction: column; gap: 2px; flex: 0 0 170px; border-right: 1px solid var(--line); padding-right: 12px; }
+.help-nav button { text-align: left; padding: 6px 10px; border: 1px solid transparent; border-radius: 8px; background: transparent;
+  color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.help-nav button:hover { background: var(--chip-bg); }
+.help-nav button.active { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.help-text { flex: 1; min-width: 0; font-size: 13px; line-height: 1.5; }
+.help-text h3 { margin: 14px 0 4px; font-size: 14px; }
+.help-text h3:first-child { margin-top: 0; }
+.help-text p { margin: 0 0 8px; }
+.help-text ol { margin: 0 0 8px; padding-left: 22px; }
+.help-text li { margin-bottom: 4px; }
+.help-text dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0 0 10px; }
+.help-text dt { font-weight: 600; color: var(--muted); font-size: 12px; padding-top: 1px; }
+.help-text dd { margin: 0; }
+.help-text code { font-family: ui-monospace, Consolas, monospace; background: var(--chip-bg); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.help-text kbd { font: 11px/1 ui-monospace, Consolas, monospace; padding: 2px 6px; border: 1px solid var(--line); border-bottom-width: 2px;
+  border-radius: 5px; background: var(--panel); }
+@media (max-width: 720px) {
+  .help-body { flex-direction: column; }
+  .help-nav { flex: none; flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--line); padding: 0 0 8px; }
+  .help-text dl { grid-template-columns: 1fr; gap: 0; }
+  .help-text dt { margin-top: 6px; }
+}

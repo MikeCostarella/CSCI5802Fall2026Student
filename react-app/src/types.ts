@@ -23,9 +23,11 @@ export interface Fork {
 }
 export interface MySprint { sprint: Sprint; github: string; fork: Fork; }
 
-export interface Classmate { name: string; github: string; email: string; me: boolean; }
+/** source: where the row came from - the shared directory, your own local list, or both. */
+export interface Classmate { name: string; github: string; email: string; me: boolean; source: "directory" | "mine" | "both"; }
+export interface ClassmateFields { name: string; github: string; email: string; }
 export interface DirectoryView {
-  entries: Classmate[]; error: string | null; fetchedAt: string | null; listed: boolean;
+  entries: Classmate[]; error: string | null; directoryMissing: boolean; fetchedAt: string | null; listed: boolean; mineCount: number;
   directoryUrl: string; editUrl: string; entry: Profile;
 }
 

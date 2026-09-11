@@ -27,18 +27,19 @@ export function entryFor(profile) {
   return { name: profile.name || "", github: profile.github || "", email: profile.email || "" };
 }
 
-let cache = { at: 0, entries: null, error: null };
+let cache = { at: 0, entries: null, error: null, missing: false }; // missing: the file isn't in the repo yet (not an outage)
 
 export async function fetchDirectory({ force = false } = {}) {
   if (!force && cache.entries && Date.now() - cache.at < 10 * 60 * 1000) return cache;
   const r = await runGh(["api", `repos/${COURSE.owner}/${COURSE.starterRepo}/contents/${COURSE.directoryPath}`,
     "-H", "Accept: application/vnd.github.raw"]);
   if (!r.ok) {
-    const error = /404/.test(r.err) ? `no ${COURSE.directoryPath} in ${COURSE.starterRepo} yet` : (r.err.trim() || "gh failed");
-    cache = { at: Date.now(), entries: cache.entries, error };
+    const missing = /404/.test(r.err);
+    const error = missing ? `no ${COURSE.directoryPath} in ${COURSE.starterRepo} yet` : (r.err.trim() || "gh failed");
+    cache = { at: Date.now(), entries: missing ? [] : cache.entries, error, missing };
     return cache;
   }
-  try { cache = { at: Date.now(), entries: parseDirectory(r.out), error: null }; }
-  catch (e) { cache = { at: Date.now(), entries: cache.entries, error: String(e.message) }; }
+  try { cache = { at: Date.now(), entries: parseDirectory(r.out), error: null, missing: false }; }
+  catch (e) { cache = { at: Date.now(), entries: cache.entries, error: String(e.message), missing: false }; }
   return cache;
 }

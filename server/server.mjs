@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { DIST, PORT } from "./config.mjs";
 import {
-  handleCourse, handleDirectory, handleMySprint, handleProfile, handleProfileSave,
+  handleClassmateDelete, handleClassmateSave, handleCourse, handleDirectory, handleMySprint, handleProfile, handleProfileSave,
   handleRestart, handleSprints, handleTeamsLinks, handleUpstream, json,
 } from "./routes.mjs";
 import {
@@ -53,6 +53,8 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/sprints" && req.method === "GET") return handleSprints(res);
     if (url.pathname === "/api/my-sprint" && req.method === "GET") return await handleMySprint(res, url);
     if (url.pathname === "/api/directory" && req.method === "GET") return await handleDirectory(res, url);
+    if (url.pathname === "/api/classmates" && req.method === "POST") return await handleClassmateSave(req, res);
+    if (url.pathname === "/api/classmates" && req.method === "DELETE") return await handleClassmateDelete(res, url);
     if (url.pathname === "/api/teams-links" && req.method === "GET") return await handleTeamsLinks(res, url);
     if (url.pathname === "/api/upstream" && req.method === "GET") return await handleUpstream(res);
     if (url.pathname === "/api/restart" && req.method === "POST") return await handleRestart(req, res);
