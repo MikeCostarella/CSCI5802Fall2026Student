@@ -8,6 +8,7 @@ import AppMenu from "./components/AppMenu";
 import BuildStamp from "./components/BuildStamp";
 import ChromeProfile from "./components/ChromeProfile";
 import HelpDialog from "./components/HelpDialog";
+import SchedulesDialog from "./components/SchedulesDialog";
 import { TOPIC_FOR_TAB, type HelpTopic } from "./components/help-content";
 import RepositoriesTab from "./components/RepositoriesTab";
 import TeamsDialog from "./components/TeamsDialog";
@@ -36,6 +37,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [help, setHelp] = useState<HelpTopic | null>(null);            // open help topic, or null
+  const [schedulesOpen, setSchedulesOpen] = useState(false);          // Menu > GitHub Actions > Scheduled jobs
 
   const flash = (msg: string) => { setNotice(msg); setTimeout(() => setNotice(""), 4000); };
 
@@ -123,7 +125,7 @@ export default function App() {
   return (
     <div className={tab === "repos" ? "app wide" : "app"}>
       <header>
-        <AppMenu course={course} profile={profile} onRestartServer={doRestart} onHelp={openHelp} />
+        <AppMenu course={course} profile={profile} onRestartServer={doRestart} onHelp={openHelp} onSchedules={() => setSchedulesOpen(true)} />
         <h1>{course?.code ?? "CSCI 5802"} <span className="sub">- Student</span></h1>
         {/* Which machine this server runs on - same chip as StatehouseUI and
             the management app, so a screenshot names its own box. */}
@@ -135,6 +137,7 @@ export default function App() {
         <button className="help-btn" title="Help for this tab (F1 or ?)" aria-label="Help" onClick={() => openHelp()}>?</button>
       </header>
 
+      {schedulesOpen && course && <SchedulesDialog course={course} onHelp={() => { setSchedulesOpen(false); setHelp("schedules"); }} onClose={() => setSchedulesOpen(false)} />}
       {help && <HelpDialog topic={help} course={course} onTopic={setHelp} onClose={() => setHelp(null)} />}
 
       <nav>

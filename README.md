@@ -78,6 +78,24 @@ Your profile and your own classmates list are stored in
 `%LOCALAPPDATA%\Teaching\CSCI5802-Fall2026-Student\`, outside the repo, so a
 careless `git add -A` can never publish them.
 
+## Scheduled jobs (Menu > GitHub Actions)
+
+Workflows that run on a timer (`on: schedule`), in two tabs:
+
+- **Class** - every scheduled job in the class org, read-only. These watch
+  what is Live; a red row is a production problem to raise in Sprints and
+  fix with a pull request. Enable / disable / run belong to the Scrum Master
+  and instructor.
+- **My forks** - the same workflows in your forks, yours to **Enable** and
+  **Run now**. GitHub turns scheduled workflows off in forks by default, and
+  a job in your fork checks *your* copy, not the class's.
+
+Help > Scheduled jobs explains cron, UTC, late or dropped runs, and the
+60-day inactivity rule. The panel is the shared scheduled-jobs library
+(`server/vendor/scheduled-jobs/`, `react-app/src/vendor/scheduled-jobs/`); it
+arrives with template merges like any other change - don't edit the vendored
+files.
+
 ## The class directory (opt-in)
 
 There is no roster in this app — the instructor's roster is FERPA-protected

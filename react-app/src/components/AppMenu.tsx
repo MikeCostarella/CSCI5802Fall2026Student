@@ -36,9 +36,9 @@ function sectionsFor(course: Course, profile: Profile | null): MenuSection[] {
   ];
 }
 
-interface Props { course: Course | null; profile: Profile | null; onRestartServer: () => void; onHelp: (topic?: HelpTopic) => void; }
+interface Props { course: Course | null; profile: Profile | null; onRestartServer: () => void; onHelp: (topic?: HelpTopic) => void; onSchedules: () => void; }
 
-export default function AppMenu({ course, profile, onRestartServer, onHelp }: Props) {
+export default function AppMenu({ course, profile, onRestartServer, onHelp, onSchedules }: Props) {
   const [open, setOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(["Course", "My repos", "Help"]));
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -82,6 +82,20 @@ export default function AppMenu({ course, profile, onRestartServer, onHelp }: Pr
               )}
             </div>
           ))}
+          <div className="menu-section">
+            <button className="menu-header" onClick={() => toggleSection("Actions")}>
+              <span className={`chevron ${openSections.has("Actions") ? "open" : ""}`}>&#9656;</span>
+              GitHub Actions
+            </button>
+            {openSections.has("Actions") && (
+              <div className="menu-links">
+                <button className="menu-action" onClick={() => { setOpen(false); onSchedules(); }}>
+                  Scheduled jobs...
+                  <span className="menu-note">the class's jobs (read-only) and your forks' (yours to run)</span>
+                </button>
+              </div>
+            )}
+          </div>
           <div className="menu-section">
             <button className="menu-header" onClick={() => toggleSection("Server")}>
               <span className={`chevron ${openSections.has("Server") ? "open" : ""}`}>&#9656;</span>

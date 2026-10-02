@@ -19,6 +19,7 @@ import {
   handleReposPush, handleReposRunDetail, handleReposRunRerun,
   handleChromeProfile, handleChromeProfilePicture, handleChromeProfileDefault,
 } from "./repo-routes.mjs";
+import { handleScheduleRun, handleSchedules, handleScheduleToggle } from "./schedules.mjs";
 
 const MIME = {
   ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
@@ -58,6 +59,9 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/teams-links" && req.method === "GET") return await handleTeamsLinks(res, url);
     if (url.pathname === "/api/upstream" && req.method === "GET") return await handleUpstream(res);
     if (url.pathname === "/api/restart" && req.method === "POST") return await handleRestart(req, res);
+    if (url.pathname === "/api/schedules" && req.method === "GET") return await handleSchedules(res, url);
+    if (url.pathname === "/api/schedule-toggle" && req.method === "POST") return await handleScheduleToggle(req, res);
+    if (url.pathname === "/api/schedule-run" && req.method === "POST") return await handleScheduleRun(req, res);
     if (url.pathname === "/api/repos" && req.method === "GET") return await handleRepos(res, url);
     if (url.pathname === "/api/repos/clone" && req.method === "POST") return await handleReposClone(req, res);
     if (url.pathname === "/api/repos/pull" && req.method === "POST") return await handleReposPull(req, res);

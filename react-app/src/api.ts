@@ -1,5 +1,6 @@
 // All fetch/JSON plumbing in one place.
 import type { Classmate, ClassmateFields, ChromeProfile, Course, DirectoryView, MySprint, Profile, ProfileView, Sprint, TeamsLinks, Upstream } from "./types";
+import type { ActionResult, SchedulesResponse } from "./vendor/scheduled-jobs/types";
 
 async function get<T>(url: string): Promise<T> {
   const r = await fetch(url);
@@ -40,4 +41,25 @@ export async function restartServer(): Promise<boolean> {
     try { if ((await fetch("/api/course", { cache: "no-store" })).ok) return true; } catch { /* still down */ }
   }
   return false;
+}
+
+// ---- scheduled jobs (Menu > Scheduled jobs): class repos (read-only) and your forks
+export async function fetchSchedules(view: "class" | "forks", fresh = false): Promise<SchedulesResponse> {
+  const res = await fetch(`/api/schedules?view=${view}${fresh ? "&fresh=1" : ""}`);
+  return res.json();
+}
+
+/** repo is the FULL name of one of your forks ("<you>/<name>"). */
+export async function toggleSchedule(repo: string, file: string, enabled: boolean): Promise<ActionResult> {
+  const res = await fetch("/api/schedule-toggle", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ repo, file, enabled }),
+  });
+  return res.json();
+}
+
+export async function runScheduleNow(repo: string, file: string): Promise<ActionResult> {
+  const res = await fetch("/api/schedule-run", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ repo, file }),
+  });
+  return res.json();
 }

@@ -4,7 +4,7 @@
 // only place the course is named.
 import type { Course } from "../types";
 
-export type HelpTopic = "start" | "sprint" | "classmates" | "repos" | "setup" | "menu";
+export type HelpTopic = "start" | "sprint" | "classmates" | "repos" | "setup" | "schedules" | "menu";
 
 export const HELP_TOPICS: { id: HelpTopic; title: string }[] = [
   { id: "start", title: "Getting started" },
@@ -12,6 +12,7 @@ export const HELP_TOPICS: { id: HelpTopic; title: string }[] = [
   { id: "classmates", title: "Classmates" },
   { id: "repos", title: "Repositories" },
   { id: "setup", title: "Setup" },
+  { id: "schedules", title: "Scheduled jobs" },
   { id: "menu", title: "Menu & shortcuts" },
 ];
 
@@ -151,12 +152,42 @@ export function HelpBody({ topic, course }: { topic: HelpTopic; course: Course |
       </p>
     </>);
 
+    case "schedules": return (<>
+      <h3>What a scheduled job is</h3>
+      <p>A GitHub Actions workflow with an <code>on: schedule</code> trigger runs on a timer instead of on a push:
+        a nightly check that the live site still answers, a weekly data refresh. Nobody pushes, nobody watches -
+        which is exactly why it is worth a panel. <b>Menu &gt; Scheduled jobs</b> shows every one in the class
+        org and in your forks: when it runs, when it runs next, and how the last run went.</p>
+      <h3>Reading a schedule</h3>
+      <dl>
+        <dt><code>41 11 * * *</code></dt><dd>minute, hour, day of month, month, day of week. This one: 11:41 every day.</dd>
+        <dt>UTC, always</dt><dd>GitHub cron is UTC. The panel shows Eastern time, which moves an hour when daylight saving starts or ends.</dd>
+        <dt>Late, sometimes skipped</dt><dd>Scheduled runs often start minutes to an hour late, and when GitHub is busy one can be dropped. The panel flags a run that should have happened and didn't.</dd>
+      </dl>
+      <h3>Class tab (read-only)</h3>
+      <p>These watch what is <b>Live</b> in {org}. A red row is a production problem: say so in the Sprints
+        channel, put it on the board, and fix it with a pull request like any other change. Enabling, disabling and
+        running class jobs is the Scrum Master's and instructor's call, so those buttons are not here.</p>
+      <h3>My forks tab</h3>
+      <dl>
+        <dt>Off by default</dt><dd>GitHub turns scheduled workflows off in a fork. Enable one only when you mean to; it then runs on your fork every time it is scheduled.</dd>
+        <dt>It checks <i>your</i> copy</dt><dd>A site-health job in your fork checks your fork's Pages site and opens issues in your fork - not the class's.</dd>
+        <dt>Run now</dt><dd>Runs it once (<code>workflow_dispatch</code>) without waiting for the timer - the safe way to try a change to a workflow before your PR.</dd>
+        <dt>Nothing listed?</dt><dd>Open the fork's <b>Actions</b> tab on GitHub once; GitHub asks before it shows a fork's workflows.</dd>
+      </dl>
+      <h3>Two GitHub rules worth knowing</h3>
+      <dl>
+        <dt>60 days</dt><dd>In a public repo with no commits for 60 days, GitHub switches scheduled workflows off. The panel warns from day 45.</dd>
+        <dt>Changing a schedule</dt><dd>Edit the <code>cron:</code> line in the workflow file and commit it - the panel's pencil opens the file. The panel never edits schedules itself.</dd>
+      </dl>
+    </>);
     case "menu": return (<>
       <h3>Menu</h3>
       <dl>
         <dt>Course</dt><dd>The course site (modules, labs, specs) and Blackboard (submissions and grades).</dd>
         <dt>My repos</dt><dd>Your fork, its pull requests and Actions, and your copy of this app.</dd>
         <dt>Instructor's repos</dt><dd>The starter you forked, its pull requests (your directory PR waits there), the class directory, this app's template, and the course site source.</dd>
+        <dt>Scheduled jobs</dt><dd>Every scheduled GitHub Actions job in the class org (read-only) and in your forks (yours to enable and run). See <i>Scheduled jobs</i> in Help.</dd>
         <dt>Server</dt><dd><strong>Restart server</strong> - after a <code>git pull</code> that changed <code>server/</code>, or after signing in to <code>gh</code>.</dd>
         <dt>Help</dt><dd>This window.</dd>
       </dl>
