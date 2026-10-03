@@ -162,7 +162,7 @@ export function HelpBody({ topic, course }: { topic: HelpTopic; course: Course |
       <dl>
         <dt><code>41 11 * * *</code></dt><dd>minute, hour, day of month, month, day of week. This one: 11:41 every day.</dd>
         <dt>UTC, always</dt><dd>GitHub cron is UTC. The panel shows Eastern time, which moves an hour when daylight saving starts or ends.</dd>
-        <dt>Late, sometimes skipped</dt><dd>Scheduled runs often start minutes to an hour late, and when GitHub is busy one can be dropped. The panel flags a run that should have happened and didn't.</dd>
+        <dt>Late, sometimes skipped</dt><dd>Scheduled runs start late - Bullpen's nightly CI routinely runs five to seven hours after its cron time - and when GitHub is busy one can be dropped. The panel flags a run that should have happened and didn't.</dd>
       </dl>
       <h3>Class tab (read-only)</h3>
       <p>These watch what is <b>Live</b> in {org}. A red row is a production problem: say so in the Sprints
